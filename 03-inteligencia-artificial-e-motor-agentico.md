@@ -125,8 +125,11 @@ Para garantir operação contínua e estável:
    - Economia de mais de **1.000 tokens por requisição**.
 3. **Esquema de Ferramentas Compacto:**
    - Definições JSON enxutas com parâmetros estritamente necessários.
-4. **Retry Exponencial com Backoff:**
-   - Em caso de rajada atípica retornando 429, a aplicação aguarda 1,5s (tempo no qual a cota do Groq reabre) e reexecuta com sucesso sem que o usuário perceba.
+4. **Pool de Chaves Multi-Key com Round-Robin e Failover Instantâneo (429):**
+   - O backend suporta múltiplas chaves de API da Groq (definidas via GROQ_API_KEY=key1,key2 ou GROQ_API_KEY_FALLBACK).
+   - **Round-Robin Preventivo:** As chamadas distribuem-se alternadamente entre as chaves do pool, multiplicando a capacidade de tokens/minuto (ex: 2 chaves elevam o teto para 14.000 ITPM).
+   - **Failover Instantâneo:** Se uma chave retornar HTTP 429 (Rate Limit) ou erro de cota, a chamada é redirecionada imediatamente para a chave reserva no mesmo instante, com zero atraso perceptível ao usuário.
+   - **Backoff de Segurança:** Se todas as chaves do pool estiverem saturadas simultaneamente, o sistema aplica um backoff de 1,5s e reexecuta.
 
 ---
 
